@@ -1,1 +1,42 @@
 {% extends "challenge.html" %}
+
+{% block description %}
+  {{ challenge.html }}
+  <div class="row text-center pb-3">
+    <div class="card" style="width: 100%;">
+      <div class="card-body">
+        <h5 class="card-title">Info</h5>
+
+        <!-- "Launch an instance" button, visible initially -->
+        <button type="button" class="btn btn-primary card-link" id="button-boot" onclick="showInstanceButtons()">
+          Launch Instance
+        </button>
+
+        <!-- "Renew" and "Destroy" buttons, side by side, hidden initially -->
+        <div id="instance-buttons" style="display: none;" class="justify-content-center">
+          <button type="button" class="btn btn-danger mx-2" id="button-destroy" onclick="hideInstanceButtons()">
+            Destroy Instance
+          </button>
+          <button type="button" class="btn btn-success mx-2" id="button-renew" onclick="renewInstance()">
+            Renew Instance
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+
+{% block input %}
+    <input id="challenge-id" class="challenge-id" type="hidden" value="{{ challenge.id }}">
+    <input id="challenge-input" class="challenge-input" type="text" name="answer" placeholder="Flag"/>
+{% endblock %}
+
+{% block submit %}
+    <button id="challenge-submit" class="challenge-submit" type="submit">
+        Submit
+    </button>
+{% endblock %}
+
+<script src="view.js"></script>

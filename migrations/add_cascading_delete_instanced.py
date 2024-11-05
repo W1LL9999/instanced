@@ -1,4 +1,4 @@
-"""Add cascading delete to dynamic challenges
+"""Add cascading delete to instanced challenges
 
 Revision ID: b37fb68807ea
 Revises:
@@ -20,18 +20,18 @@ def upgrade(op=None):
     try:
         if url.startswith("mysql"):
             op.drop_constraint(
-                "dynamic_challenge_ibfk_1", "dynamic_challenge", type_="foreignkey"
+                "instanced_challenge_ibfk_1", "instanced_challenge", type_="foreignkey"
             )
         elif url.startswith("postgres"):
             op.drop_constraint(
-                "dynamic_challenge_id_fkey", "dynamic_challenge", type_="foreignkey"
+                "instanced_challenge_id_fkey", "instanced_challenge", type_="foreignkey"
             )
     except sqlalchemy.exc.InternalError as e:
         print(str(e))
 
     try:
         op.create_foreign_key(
-            None, "dynamic_challenge", "challenges", ["id"], ["id"], ondelete="CASCADE"
+            None, "instanced_challenge", "challenges", ["id"], ["id"], ondelete="CASCADE"
         )
     except sqlalchemy.exc.InternalError as e:
         print(str(e))
@@ -43,16 +43,16 @@ def downgrade(op=None):
     try:
         if url.startswith("mysql"):
             op.drop_constraint(
-                "dynamic_challenge_ibfk_1", "dynamic_challenge", type_="foreignkey"
+                "instanced_challenge_ibfk_1", "instanced_challenge", type_="foreignkey"
             )
         elif url.startswith("postgres"):
             op.drop_constraint(
-                "dynamic_challenge_id_fkey", "dynamic_challenge", type_="foreignkey"
+                "instanced_challenge_id_fkey", "instanced_challenge", type_="foreignkey"
             )
     except sqlalchemy.exc.InternalError as e:
         print(str(e))
 
     try:
-        op.create_foreign_key(None, "dynamic_challenge", "challenges", ["id"], ["id"])
+        op.create_foreign_key(None, "instanced_challenge", "challenges", ["id"], ["id"])
     except sqlalchemy.exc.InternalError as e:
         print(str(e))

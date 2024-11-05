@@ -1,14 +1,16 @@
-from flask import Blueprint
+from flask import Blueprint, render_template
 
 from CTFd.models import Challenges, db
-from CTFd.plugins import register_plugin_assets_directory
+from CTFd.plugins import register_plugin_assets_directory, register_admin_plugin_menu_bar
 from CTFd.plugins.challenges import CHALLENGE_CLASSES, BaseChallenge
 from CTFd.plugins.dynamic_challenges.decay import DECAY_FUNCTIONS, logarithmic
 from CTFd.plugins.migrations import upgrade
+from CTFd.utils.decorators import admins_only
 
 
-class DynamicChallenge(Challenges):
-    __mapper_args__ = {"polymorphic_identity": "dynamic"}
+
+class InstancedChallenge(Challenges):
+    __mapper_args__ = {"polymorphic_identity": "instanced"}
     id = db.Column(
         db.Integer, db.ForeignKey("challenges.id", ondelete="CASCADE"), primary_key=True
     )
@@ -18,35 +20,36 @@ class DynamicChallenge(Challenges):
     function = db.Column(db.String(32), default="logarithmic")
 
     def __init__(self, *args, **kwargs):
-        super(DynamicChallenge, self).__init__(**kwargs)
+        super(InstancedChallenge, self).__init__(**kwargs)
         self.value = kwargs["initial"]
 
 
-class DynamicValueChallenge(BaseChallenge):
-    id = "dynamic"  # Unique identifier used to register challenges
-    name = "dynamic"  # Name of a challenge type
+class InstancedValueChallenge(BaseChallenge):
+    id = "instanced"  # Unique identifier used to register challenges
+    name = "instanced"  # Name of a challenge type
     templates = (
         {  # Handlebars templates used for each aspect of challenge editing & viewing
-            "create": "/plugins/dynamic_challenges/assets/create.html",
-            "update": "/plugins/dynamic_challenges/assets/update.html",
-            "view": "/plugins/dynamic_challenges/assets/view.html",
+            "create": "/plugins/instanced/assets/create.html",
+            "update": "/plugins/instanced/assets/update.html",
+            "view": "/plugins/instanced/assets/view.html",
         }
     )
     scripts = {  # Scripts that are loaded when a template is loaded
-        "create": "/plugins/dynamic_challenges/assets/create.js",
-        "update": "/plugins/dynamic_challenges/assets/update.js",
-        "view": "/plugins/dynamic_challenges/assets/view.js",
+        "create": "/plugins/instanced/assets/create.js",
+        "update": "/plugins/instanced/assets/update.js",
+        "view": "/plugins/instanced/assets/view.js",
     }
     # Route at which files are accessible. This must be registered using register_plugin_assets_directory()
-    route = "/plugins/dynamic_challenges/assets/"
+    route = "/plugins/instanced/"
     # Blueprint used to access the static_folder directory.
     blueprint = Blueprint(
-        "dynamic_challenges",
+        "instanced",
         __name__,
         template_folder="templates",
         static_folder="assets",
+        url_prefix="/plugins/instanced"
     )
-    challenge_model = DynamicChallenge
+    challenge_model = InstancedChallenge
 
     @classmethod
     def calculate_value(cls, challenge):
@@ -65,7 +68,7 @@ class DynamicValueChallenge(BaseChallenge):
         :param challenge:
         :return: Challenge object, data dictionary to be returned to the user
         """
-        challenge = DynamicChallenge.query.filter_by(id=challenge.id).first()
+        challenge = InstancedChallenge.query.filter_by(id=challenge.id).first()
         data = super().read(challenge)
         data.update(
             {
@@ -95,18 +98,29 @@ class DynamicValueChallenge(BaseChallenge):
                 value = float(value)
             setattr(challenge, attr, value)
 
-        return DynamicValueChallenge.calculate_value(challenge)
+        return InstancedValueChallenge.calculate_value(challenge)
 
     @classmethod
     def solve(cls, user, team, challenge, request):
         super().solve(user, team, challenge, request)
+        InstancedValueChallenge.calculate_value(challenge)
 
-        DynamicValueChallenge.calculate_value(challenge)
-
+    
+@InstancedValueChallenge.blueprint.route("/admin/settings")
+### CALL PAGES from: instanced/templates/ ###
+@admins_only
+def test_page():
+    return render_template("test.html")
 
 def load(app):
-    upgrade(plugin_name="dynamic_challenges")
-    CHALLENGE_CLASSES["dynamic"] = DynamicValueChallenge
-    register_plugin_assets_directory(
-        app, base_path="/plugins/dynamic_challenges/assets/"
-    )
+    upgrade(plugin_name="instancer")
+    CHALLENGE_CLASSES["instanced"] = InstancedValueChallenge
+    register_plugin_assets_directory(app, base_path="/plugins/instanced/assets/")
+    register_admin_plugin_menu_bar(title='Instancer',route='/plugins/instanced/admin/settings') ## Hide for prod
+    app.register_blueprint(InstancedValueChallenge.blueprint)
+
+    # Create tables if they do not exist
+"""    with app.app_context():
+        if not db.engine.has_table('instanced_challenge'):
+            db.create_all()"""
+
