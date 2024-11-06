@@ -1,62 +1,37 @@
+<!-- templates/test.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instanced Actions</title>
-    <style>
-        /* Styling for buttons */
-        .button {
-            padding: 15px 30px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
-
-        .create-button {
-            background-color: blue;
-            color: white;
-        }
-
-        .renew-button {
-            background-color: green;
-            color: white;
-        }
-
-        .destroy-button {
-            background-color: red;
-            color: white;
-        }
-    </style>
+    <title>API Test Page</title>
+    <!-- CTFd likely already includes jQuery, but ensure it's available -->
+    <script src="/plugins/instanced/assets/test.js"></script>
+    <link rel="stylesheet" href="/plugins/instanced/assets/test.css">
 </head>
 <body>
+    <h1>API Testing Interface</h1>
 
-    <h1>Instanced Challenge Actions</h1>
+    <input type="hidden" id="nonce" value="{{ Session.nonce }}">
 
-    <!-- Buttons for Create, Renew, and Destroy actions -->
-    <button class="button create-button" onclick="createAction()">Create</button>
-    <button class="button renew-button" onclick="renewAction()">Renew</button>
-    <button class="button destroy-button" onclick="destroyAction()">Destroy</button>
+    <!-- Test GET Status API -->
+    <div class="api-test-section">
+        <h2>Test Status API</h2>
+        <button onclick="testStatusAPI()">Get Status</button>
+        <div id="status-response" class="response-box"></div>
+    </div>
 
-    <script>
-        // Placeholder functions for button actions
-        function createAction() {
-            alert("Create action triggered.");
-            // Add logic for create action here
-        }
+    <!-- Test POST Data API -->
+    <div class="api-test-section">
+        <h2>Test Data Submission</h2>
+        <textarea id="data-input" rows="4" cols="50">{"test": "data"}</textarea><br>
+        <button onclick="testDataSubmission()">Submit Data</button>
+        <div id="data-response" class="response-box"></div>
+    </div>
 
-        function renewAction() {
-            alert("Renew action triggered.");
-            // Add logic for renew action here
-        }
-
-        function destroyAction() {
-            alert("Destroy action triggered.");
-            // Add logic for destroy action here
-        }
-    </script>
-
+    <!-- Test Admin Metrics API -->
+    <div class="api-test-section">
+        <h2>Test Admin Metrics</h2>
+        <button onclick="testAdminMetrics()">Get Metrics</button>
+        <div id="metrics-response" class="response-box"></div>
+    </div>
 </body>
 </html>
