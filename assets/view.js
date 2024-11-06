@@ -9,15 +9,79 @@ CTFd._internal.challenge.render = null
 CTFd._internal.challenge.postRender = function () {
 }
 
+// CSRF for POST 
+function getCsrfToken() {
+    const nonceElement = document.getElementById('nonce');
+    if (nonceElement && nonceElement.value) {
+        return nonceElement.value;
+    }
+    console.error('CSRF token not found');
+    return null;
+}
+
+// Create Instance 
+function createInstance() {
+    var challenge_id = document.getElementById('challenge-id').value;
+    document.getElementById('button-boot').style.display = "none";
+    document.getElementById('instance-buttons').style.display = "flex";
+    
+    CTFd.fetch("/plugins/instanced/api/create", {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            challenge_id: challenge_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("API Response:", data);
+
+        const cardTitle = document.querySelector('.card-title');
+        if (cardTitle) {
+            cardTitle.innerHTML = `<a href="${data.data.url}" target="_blank">${data.data.url}</a>`;
+        }
+    })
+    .catch(error => console.error("Error fetching status:", error));
+}
+
+function deleteInstance() {
+    document.getElementById('button-boot').style.display = "inline-block";
+    document.getElementById('instance-buttons').style.display = "none";
+    
+    var challenge_id = document.getElementById('challenge-id').value;
+    
+    CTFd.fetch("/plugins/instanced/api/delete", {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            challenge_id: challenge_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("API Response:", data);
+        const cardTitle = document.querySelector('.card-title');
+        if (cardTitle) {
+            cardTitle.innerHTML = 'Info';
+        }
+    })
+    .catch(error => console.error("Error fetching status:", error));
+ }
+
 // Testing Buttons
 function showInstanceButtons() {
     document.getElementById('button-boot').style.display = "none";
     document.getElementById('instance-buttons').style.display = "flex";
 }
-function hideInstanceButtons() {
-    document.getElementById('button-boot').style.display = "inline-block";
-    document.getElementById('instance-buttons').style.display = "none";
-}
+
 function renewInstance() {
     alert("Instance renewed!");
 }
@@ -25,7 +89,7 @@ function renewInstance() {
 
 CTFd._internal.challenge.destroy = function () {
     var challenge_id = document.getElementById('challenge-id').value;
-    var url = "";
+    var user_id = document.getElementById('user-id').value;
 
     var buttonDestroy = document.getElementById('button-destroy');
     buttonDestroy.innerHTML = "Waiting...";
@@ -41,14 +105,17 @@ CTFd._internal.challenge.destroy = function () {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(params)
-    }).then(function (response) {
-        if (response.status === 429) {
+    })
+    
+    .then(function (response) {
+        if (response.status === 429) { // User ratelimited
             return response.json();
         }
-        if (response.status === 403) {
+        if (response.status === 403) { // User not logged in or CTF paused
             return response.json();
         }
         return response.json();
+
     }).then(function (response) {
         if (response.success) {
             loadInfo();
@@ -58,7 +125,6 @@ CTFd._internal.challenge.destroy = function () {
                 button: "OK"
             });
         } else {
-            buttonDestroy.innerHTML = "Destroy this instance";
             buttonDestroy.disabled = false;
             CTFd.ui.ezq.ezAlert({
                 title: "Fail",
@@ -69,9 +135,10 @@ CTFd._internal.challenge.destroy = function () {
     });
 };
 
+
 CTFd._internal.challenge.renew = function () {
     var challenge_id = document.getElementById('challenge-id').value;
-    var url = "";
+    var url = "instanced/assets/test.js";
 
     var buttonRenew = document.getElementById('button-renew');
     buttonRenew.innerHTML = "Waiting...";
@@ -158,28 +225,6 @@ CTFd._internal.challenge.boot = function () {
                 button: "OK"
             });
         }
-    });
-};
-
-CTFd._internal.challenge.submit = function (preview) {
-    var challenge_id = document.getElementById('challenge-id').value;
-    var submission = document.getElementById('challenge-input').value;
-
-    var body = {
-        'challenge_id': challenge_id,
-        'submission': submission,
-    }
-    var params = {};
-    if (preview) params['preview'] = true;
-
-    return CTFd.api.post_challenge_attempt(params, body).then(function (response) {
-        if (response.status === 429) {
-            return response;
-        }
-        if (response.status === 403) {
-            return response;
-        }
-        return response;
     });
 };
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 
 from CTFd.models import Challenges, db
 from CTFd.plugins import register_plugin_assets_directory, register_admin_plugin_menu_bar
@@ -6,7 +6,8 @@ from CTFd.plugins.challenges import CHALLENGE_CLASSES, BaseChallenge
 from CTFd.plugins.dynamic_challenges.decay import DECAY_FUNCTIONS, logarithmic
 from CTFd.plugins.migrations import upgrade
 from CTFd.utils.decorators import admins_only
-
+from flask_cors import CORS
+from .oc_api import oc_api
 
 
 class InstancedChallenge(Challenges):
@@ -105,19 +106,23 @@ class InstancedValueChallenge(BaseChallenge):
         super().solve(user, team, challenge, request)
         InstancedValueChallenge.calculate_value(challenge)
 
-    
+
 @InstancedValueChallenge.blueprint.route("/admin/settings")
 ### CALL PAGES from: instanced/templates/ ###
 @admins_only
 def test_page():
     return render_template("test.html")
 
+
+
 def load(app):
     upgrade(plugin_name="instancer")
     CHALLENGE_CLASSES["instanced"] = InstancedValueChallenge
     register_plugin_assets_directory(app, base_path="/plugins/instanced/assets/")
     register_admin_plugin_menu_bar(title='Instancer',route='/plugins/instanced/admin/settings') ## Hide for prod
+
     app.register_blueprint(InstancedValueChallenge.blueprint)
+    app.register_blueprint(oc_api, url_prefix='/plugins/instanced/api')
 
     # Create tables if they do not exist
 """    with app.app_context():

@@ -1,13 +1,6 @@
-"""Add cascading delete to instanced challenges
-
-Revision ID: b37fb68807ea
-Revises:
-Create Date: 2020-05-06 12:21:39.373983
-
-"""
 import sqlalchemy
 
-revision = "b37fb68807ea"
+revision = None
 down_revision = None
 branch_labels = None
 depends_on = None
